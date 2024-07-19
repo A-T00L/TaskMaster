@@ -1,32 +1,112 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
+using ToDo.Data;
 using ToDo.Models;
 
 namespace ToDo.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
+        private ToDoContext context;
+        public HomeController(ToDoContext ctx) => this.context = ctx;
+        public IActionResult Index(string id)
         {
-            _logger = logger;
+            var filters = new Filters(id);
+            ViewBag.Filters = filters;
+
+            ViewBag.Categories = context.Categories.ToList();
+            ViewBag.Statuses = context.Statuses.ToList();
+            ViewBag.Filters = Filters.DueFilterValues;
+
+            IQueryable<ToDoo> query = context.ToDOs
+                .Include(t => t.Category)
+                .Include(t => t.Status);
+
+            if(filters.HasCategory)
+            {
+                query = query.Where(t => t.CategoryId == filters.CategoryId);
+            }
+            if(filters.HasStatus)
+            {
+                query = query.Where(t => t.StatusId == filters.StatusId);
+            }
+            if(filters.HasDue)
+            {
+                var today = DateTime.Today;
+                if(filters.IsPast)
+                {
+                    query = query.Where(t => t.DueDate < today);
+                }
+                else if(filters.IsFuture)
+                {
+                    query = query.Where(t => t.DueDate > today);
+                }
+                else if (filters.IsToday)
+                {
+                    query = query.Where(t => t.DueDate == today);
+                }
+            }
+            var tasks = query.OrderBy(t => t.DueDate).ToList();
+            return View(tasks);
         }
 
-        public IActionResult Index()
+        [HttpGet]
+        public IActionResult Add()
         {
-            return View();
+            ViewBag.Categories = context.Categories.ToList();
+            ViewBag.Statuses = context.Statuses.ToList();
+            var task = new ToDoo { StatusId = "open" };
+            return View(task);
         }
 
-        public IActionResult Privacy()
+        [HttpPost]
+        public IActionResult Add(ToDoo task)
         {
-            return View();
+            if(ModelState.IsValid)
+            {
+                context.ToDOs.Add(task);
+                context.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                ViewBag.Categories = context.Categories.ToList();
+                ViewBag.Statuses = context.Statuses.ToList();
+                return View(task);
+            }
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        [HttpPost]
+        public IActionResult Filter(string[] filter)
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            string id = string.Join('-', filter);
+            return RedirectToAction("Index", new { ID = id });
+        }
+        [HttpPost]
+        public IActionResult MarkComplete([FromRoute] string id, ToDoo selected)
+        {
+            selected = context.ToDOs.Find(selected.Id)!;
+            if(selected != null)
+            {
+                selected.StatusId = "closed";
+                context.SaveChanges();
+            }
+            return RedirectToAction("Index", new {ID = id});
+        }
+
+        [HttpPost]
+        public IActionResult DeleteComplete(string id)
+        {
+            var toDelete = context.ToDOs.Where(t => t.StatusId == "closed").ToList();
+
+            foreach(var task in toDelete)
+            {
+                context.ToDOs.Remove(task);
+            }
+            context.SaveChanges();
+
+            return RedirectToAction("Index", new { ID = id });
         }
     }
 }
