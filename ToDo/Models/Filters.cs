@@ -6,13 +6,13 @@ namespace ToDo.Models
     {
         public Filters(string filterstring)
         {
-            Filterstring = filterstring ?? "all-all-all"; //null operator property
-            string[] filters = Filterstring.Split('-');
+            FilterString = filterstring ?? "all-all-all"; //null operator property
+            string[] filters = FilterString.Split('-');
             CategoryId = filters[0];
             Due = filters[1];
             StatusId = filters[2];
         }
-        public string Filterstring { get; }
+        public string FilterString { get; }
         public string CategoryId { get; }
         public string Due { get; }
         public string StatusId { get; }
@@ -22,7 +22,7 @@ namespace ToDo.Models
         public static Dictionary<string, string> DueFilterValues => new Dictionary<string, string>
         {
             {"future", "Future" },
-            {"past", "Past"},
+            {"past", "Past" },
             {"today", "Today" }
         };
         public bool IsPast => Due.ToLower() == "past";

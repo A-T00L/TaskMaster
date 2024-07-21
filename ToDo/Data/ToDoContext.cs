@@ -23,8 +23,7 @@ namespace ToDo.Data
             );
             modelBuilder.Entity<Status>().HasData(
                 new Status { StatusId = "open", Name = "Open" },
-                new Status { StatusId = "closed", Name = "Completed" }
-                
+                new Status { StatusId = "closed", Name = "Completed" } 
             );
         }
     }
