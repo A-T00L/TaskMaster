@@ -14,9 +14,14 @@
             <option value=""></option>
             </select>
     </div>
-    <div class="mb-3">
+    @* <div class="mb-3">
         <label asp-for="DueDate" class="form-label">DueDate</label>
         <input asp-for="DueDate" class="form-control" type="text" />
+    </div> *@
+    <div class="mb-3">
+        <label asp-for="DueDate" class="form-label">Due Date</label>
+        <input asp-for="DueDate" class="form-control" type="text" data-provide="datepicker" /> @* implementing datepicker *@
+        <span asp-validation-for="DueDate" class="text-danger"></span>
     </div>
     <div class="mb-3">
         <label asp-for="StatusId" class="form-label">Status</label>
@@ -26,3 +31,12 @@
     <button type="submit" class="btn btn-primary">Add</button>
     <a asp-action="Index" class="btn btn-primary">Cancel</a>
 </form>
+<script>
+    $(document).ready(function () {
+        $('[data-provide="datepicker"]').datepicker({
+            format: 'mm/dd/yyyy',
+            todayHighlight: true,
+            autoclose: true
+        });
+    });
+</script>
